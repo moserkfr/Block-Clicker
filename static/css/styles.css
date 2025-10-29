@@ -1,0 +1,81 @@
+body {
+    background-image: url('../images/background.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 100vh; 
+    margin: 0;
+}
+
+.navbar {
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+.navbar-collapse {
+    margin-left: 1130px;
+}
+
+.left {
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    height: 600px;
+    width: 600px;
+    margin-top: -30px;
+    margin-left: -30px;
+    margin-bottom: -20px;
+    text-align: center;
+}
+
+.right {
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    height: 600px;
+    width: 700px;
+    margin-top: -615px;
+    margin-left: 625px;
+    margin-bottom: -30px;
+    text-align: center;
+}
+
+.displayname {
+    font-size: 35px;
+    font-weight: bold;
+    color: #333;
+}
+
+.counter {
+    font-size: 30px;
+    color: #333;
+    margin-top: 10px;
+}
+
+.ps {
+    font-size: 20px;
+    color: #333;
+    margin-top: -20px;
+}
+
+.clicker {
+    background-color: transparent;
+    border: none;
+    width: 300px;
+    height: 300px;
+    margin-top: 10px;
+    margin-left: -10px;
+    margin-bottom: 50px;
+}
+
+.clicker:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s;
+}
+
+.pop {
+  transition: transform 60ms ease-out;
+}
+
+.pop:active {        
+  transform: scale(0.92);
+}
+
+

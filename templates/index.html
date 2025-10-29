@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+{% block title %}Block Clicker{% endblock %}
+
+{% block main %}
+    <div class="left">
+        <p>
+            <h3 class="displayname">{{ user["username"] }}'s Mine</h3>
+            <p class="counter"><span id="counter">{{ user["blocks"] }}</span> blocks</p>
+            <p class="ps">per second: </p>
+            <button class="clicker" id="clicker" onclick="incrementBlocks()">
+                <img src="{{ url_for('static', filename='images/stone.png') }}" alt="Stone" class="clicker-image pop">
+            </button>
+        </p>
+    </div>
+    <div class="right">
+        <h2>Upgrades</h2>
+
+        <p>Pickaxe: {{ upgrades["pickaxe"]["cost"] }} blocks</p>
+        <form action="/upgrade" method="post" onsubmit="buyUpgrade('pickaxe'); return false;">
+            <button type="submit">Buy</button>
+        </form>
+     
+        <p>Friend: {{ upgrades["friend"]["cost"] }} blocks</p>
+        <form action="/upgrade" method="post" onsubmit="buyUpgrade('friend'); return false;">
+            <button type="submit">Buy</button>
+        </form>
+
+        <p>Beacon: {{ upgrades["beacon"]["cost"] }} blocks</p>
+        <form action="/upgrade" method="post" onsubmit="buyUpgrade('beacon'); return false;">
+            <button type="submit">Buy</button>
+        </form>
+    </div>
+
+    
+    <script>
+        async function buyUpgrade(upgradeType) {
+            const response = await fetch(`/upgrade`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ upgrade_type: upgradeType })
+            });
+            const data = await response.json();
+            if (data.error) {
+                alert(data.error);
+            } else {
+                document.getElementById('counter').innerText = data.blocks;
+                if (upgradeType === 'pickaxe') {
+                    document.getElementById('pickaxe-cost').innerText = data.next_cost;
+                } else if (upgradeType === 'friend') {
+                    document.getElementById('friend-cost').innerText = data.next_cost;
+                } else if (upgradeType === 'beacon') {
+                    document.getElementById('beacon-cost').innerText = data.next_cost;
+                }
+            }
+        }
+    </script>
+
+{% endblock %}
