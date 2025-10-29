@@ -16,31 +16,32 @@
         </p>
     </div>
     <div class="right">
-        <h2>Upgrades</h2>
+        <h2 class="displayname">Upgrades</h2>
+        <div class="upgrade-list">
+            <p>
+                ⛏️Pickaxe (Level <span id="pickaxe-level">{{ upgrades["pickaxe"]["level"] }}</span>)<br>
+                Cost: <span id="pickaxe-cost">{{ upgrades["pickaxe"]["cost"] }}</span> blocks
+            </p>
+            <form onsubmit="buyUpgrade('pickaxe'); return false;">
+                <button type="submit">Buy</button>
+            </form>
+        
+            <p>
+                🧍‍♂️Friend (Level <span id="friend-level">{{ upgrades["friend"]["level"] }}</span>)<br>
+                Cost: <span id="friend-cost">{{ upgrades["friend"]["cost"] }}</span> blocks
+            </p>
+            <form onsubmit="buyUpgrade('friend'); return false;">
+                <button type="submit">Buy</button>
+            </form>
 
-        <p>
-            Pickaxe (Level <span id="pickaxe-level">{{ upgrades["pickaxe"]["level"] }}</span>)<br>
-            Cost: <span id="pickaxe-cost">{{ upgrades["pickaxe"]["cost"] }}</span> blocks
-        </p>
-        <form onsubmit="buyUpgrade('pickaxe'); return false;">
-            <button type="submit">Buy</button>
-        </form>
-     
-        <p>
-            Friend (Level <span id="friend-level">{{ upgrades["friend"]["level"] }}</span>)<br>
-            Cost: <span id="friend-cost">{{ upgrades["friend"]["cost"] }}</span> blocks
-        </p>
-        <form onsubmit="buyUpgrade('friend'); return false;">
-            <button type="submit">Buy</button>
-        </form>
-
-        <p>
-            Beacon (Level <span id="beacon-level">{{ upgrades["beacon"]["level"] }}</span>)<br>
-            Cost: <span id="beacon-cost">{{ upgrades["beacon"]["cost"] }}</span> blocks
-        </p>
-        <form onsubmit="buyUpgrade('beacon'); return false;">
-            <button type="submit">Buy</button>
-        </form>
+            <p>
+                🌟Beacon (Level <span id="beacon-level">{{ upgrades["beacon"]["level"] }}</span>)<br>
+                Cost: <span id="beacon-cost">{{ upgrades["beacon"]["cost"] }}</span> blocks
+            </p>
+            <form onsubmit="buyUpgrade('beacon'); return false;">
+                <button type="submit">Buy</button>
+            </form>
+        </div>
     </div>
 
     
