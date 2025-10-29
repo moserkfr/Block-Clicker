@@ -28,14 +28,29 @@ def index():
     user_id = session["user_id"]
     user = db.execute("SELECT * FROM users WHERE id = ?", user_id)[0]
 
-    # Same upgrades dict you use in /upgrade
     upgrades = {
-        "pickaxe": {"cost": 10, "multiplier": 1, "effect": "bpc"},
-        "friend": {"cost": 100, "multiplier": 1.5, "effect": "bps"},
-        "beacon": {"cost": 1000, "multiplier": 2, "effect": "bps"}
+        "pickaxe": {"cost": 10, "multiplier": 1.2, "effect": "bpc", "power": 1},
+        "friend": {"cost": 100, "multiplier": 1.5, "effect": "bps", "power": 1},
+        "beacon": {"cost": 1000, "multiplier": 2, "effect": "bps", "power": 10}
     }
 
-    return render_template("index.html", user=user, upgrades=upgrades)
+    template_upgrades = {}
+    for upgrade_type, stats in upgrades.items():
+        row = db.execute("SELECT level FROM upgrades WHERE user_id = ? AND upgrade_name = ?", user_id, upgrade_type)
+        
+        if not row:
+            level = 0
+        else:
+            level = row[0]["level"]
+        
+        current_cost = int(stats["cost"] * (stats["multiplier"] ** level))
+        
+        template_upgrades[upgrade_type] = {
+            "cost": current_cost,
+            "level": level
+        }
+
+    return render_template("index.html", user=user, upgrades=template_upgrades)
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -123,45 +138,65 @@ def upgrade():
     user = db.execute("SELECT * FROM users WHERE id = ?", user_id)[0]
 
     upgrades = {
-        "pickaxe": {"cost": 10, "multiplier": 1, "effect": "bpc"},
-        "friend": {"cost": 100, "multiplier": 1.5, "effect": "bps"},
-        "beacon": {"cost": 1000, "multiplier": 2, "effect": "bps"}
+        "pickaxe": {"cost": 10, "multiplier": 1.2, "effect": "bpc", "power": 1},
+        "friend": {"cost": 100, "multiplier": 1.5, "effect": "bps", "power": 1},
+        "beacon": {"cost": 1000, "multiplier": 2, "effect": "bps", "power": 10}
     }
 
     if upgrade_type not in upgrades:
         return jsonify({"error": "Invalid upgrade type"}), 400
 
-    row = db.execute("SELECT level FROM upgrades WHERE user_id = ? AND type = ?", user_id, upgrade_type)
+    stats = upgrades[upgrade_type]
+
+    row = db.execute("SELECT level FROM upgrades WHERE user_id = ? AND upgrade_name = ?", user_id, upgrade_type)
 
     if not row:
-        db.execute("INSERT INTO upgrades (user_id, type, level) VALUES (?, ?, ?)", user_id, upgrade_type, 0)
+        db.execute("INSERT INTO upgrades (user_id, upgrade_name, level) VALUES (?, ?, ?)", user_id, upgrade_type, 0)
         level = 0
     else:
         level = row[0]["level"]
 
-    base = upgrades[upgrade_type]["cost"]
-    cost = int(base * (upgrades[upgrade_type]["multiplier"] ** level))
+    base = stats["cost"]
+    cost = int(base * (stats["multiplier"] ** level))
 
     if user["blocks"] < cost:
         return jsonify({"error": "Not enough blocks"}), 400
 
     db.execute("UPDATE users SET blocks = blocks - ? WHERE id = ?", cost, user_id)
 
-    db.execute("UPDATE upgrades SET level = level + 1 WHERE user_id = ? AND type = ?", user_id, upgrade_type)
+    db.execute("UPDATE upgrades SET level = level + 1 WHERE user_id = ? AND upgrade_name = ?", user_id, upgrade_type)
 
-    if upgrades[upgrade_type]["effect"] == "bpc":
-        db.execute("UPDATE users SET bpc = bpc + 1 WHERE id = ?", user_id)
-    elif upgrades[upgrade_type]["effect"] == "bps":
-        db.execute("UPDATE users SET bps = bps * ? WHERE id = ?", upgrades[upgrade_type]["multiplier"], user_id)
+    if stats["effect"] == "bpc":
+        db.execute("UPDATE users SET bpc = bpc + ? WHERE id = ?", stats["power"], user_id)
+    elif stats["effect"] == "bps":
+        db.execute("UPDATE users SET bps = bps + ? WHERE id = ?", stats["power"], user_id)
+
 
     updated = db.execute("SELECT * FROM users WHERE id = ?", user_id)[0]
     new_level = level + 1
-    next_cost = int(base * (upgrades[upgrade_type]["multiplier"] ** new_level))
+    next_cost = int(base * (stats["multiplier"] ** new_level))
 
     return jsonify({
         "blocks": updated["blocks"],
         "bpc": updated["bpc"],
         "bps": updated["bps"],
         "level": new_level,
-        "next_cost": next_cost
+        "next_cost": next_cost,
+        "upgrade_type": upgrade_type
     })
+
+@app.route("/auto_mine", methods=["POST"])
+def auto_mine():
+    """Add BPS blocks automatically"""
+    if not session.get("user_id"):
+        return jsonify({"error": "Not logged in"}), 401 
+
+    user_id = session["user_id"]
+    
+    bps = db.execute("SELECT bps FROM users WHERE id = ?", user_id)[0]["bps"]
+
+    if bps > 0:
+        db.execute("UPDATE users SET blocks = blocks + ? WHERE id = ?", bps, user_id)
+    
+    total = db.execute("SELECT blocks FROM users WHERE id = ?", user_id)[0]["blocks"]
+    return jsonify({"blocks": total})

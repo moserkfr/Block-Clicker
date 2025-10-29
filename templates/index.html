@@ -6,8 +6,10 @@
     <div class="left">
         <p>
             <h3 class="displayname">{{ user["username"] }}'s Mine</h3>
-            <p class="counter"><span id="counter">{{ user["blocks"] }}</span> blocks</p>
-            <p class="ps">per second: </p>
+            <p class="counter">
+                <span id="counter" data-bps="{{ user['bps'] }}">{{ user["blocks"] }}</span> blocks
+            </p>
+            <p class="ps">per second: <span id="bps-display">{{ user["bps"] }}</span></p>
             <button class="clicker" id="clicker" onclick="incrementBlocks()">
                 <img src="{{ url_for('static', filename='images/stone.png') }}" alt="Stone" class="clicker-image pop">
             </button>
@@ -16,24 +18,55 @@
     <div class="right">
         <h2>Upgrades</h2>
 
-        <p>Pickaxe: {{ upgrades["pickaxe"]["cost"] }} blocks</p>
-        <form action="/upgrade" method="post" onsubmit="buyUpgrade('pickaxe'); return false;">
+        <p>
+            Pickaxe (Level <span id="pickaxe-level">{{ upgrades["pickaxe"]["level"] }}</span>)<br>
+            Cost: <span id="pickaxe-cost">{{ upgrades["pickaxe"]["cost"] }}</span> blocks
+        </p>
+        <form onsubmit="buyUpgrade('pickaxe'); return false;">
             <button type="submit">Buy</button>
         </form>
      
-        <p>Friend: {{ upgrades["friend"]["cost"] }} blocks</p>
-        <form action="/upgrade" method="post" onsubmit="buyUpgrade('friend'); return false;">
+        <p>
+            Friend (Level <span id="friend-level">{{ upgrades["friend"]["level"] }}</span>)<br>
+            Cost: <span id="friend-cost">{{ upgrades["friend"]["cost"] }}</span> blocks
+        </p>
+        <form onsubmit="buyUpgrade('friend'); return false;">
             <button type="submit">Buy</button>
         </form>
 
-        <p>Beacon: {{ upgrades["beacon"]["cost"] }} blocks</p>
-        <form action="/upgrade" method="post" onsubmit="buyUpgrade('beacon'); return false;">
+        <p>
+            Beacon (Level <span id="beacon-level">{{ upgrades["beacon"]["level"] }}</span>)<br>
+            Cost: <span id="beacon-cost">{{ upgrades["beacon"]["cost"] }}</span> blocks
+        </p>
+        <form onsubmit="buyUpgrade('beacon'); return false;">
             <button type="submit">Buy</button>
         </form>
     </div>
 
     
     <script>
+        async function autoMine() {
+            const counter = document.getElementById('counter');
+            
+            const currentBps = parseInt(counter.getAttribute('data-bps')); 
+
+            if (currentBps > 0) {
+                const response = await fetch('/auto_mine', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    counter.innerText = data.blocks;
+                }
+            }
+        }
+
+        setInterval(autoMine, 1000); 
+
         async function buyUpgrade(upgradeType) {
             const response = await fetch(`/upgrade`, {
                 method: 'POST',
@@ -42,17 +75,29 @@
                 },
                 body: JSON.stringify({ upgrade_type: upgradeType })
             });
+            
             const data = await response.json();
+            
             if (data.error) {
                 alert(data.error);
             } else {
-                document.getElementById('counter').innerText = data.blocks;
-                if (upgradeType === 'pickaxe') {
-                    document.getElementById('pickaxe-cost').innerText = data.next_cost;
-                } else if (upgradeType === 'friend') {
-                    document.getElementById('friend-cost').innerText = data.next_cost;
-                } else if (upgradeType === 'beacon') {
-                    document.getElementById('beacon-cost').innerText = data.next_cost;
+                const counter = document.getElementById('counter');
+                const bpsDisplay = document.getElementById('bps-display');
+
+                counter.innerText = data.blocks;
+
+                if (bpsDisplay) {
+                    bpsDisplay.innerText = data.bps;
+                }
+                counter.setAttribute('data-bps', data.bps);
+
+                const type = data.upgrade_type;
+                
+                if (document.getElementById(type + '-cost')) {
+                    document.getElementById(type + '-cost').innerText = data.next_cost;
+                }
+                if (document.getElementById(type + '-level')) {
+                    document.getElementById(type + '-level').innerText = data.level;
                 }
             }
         }
